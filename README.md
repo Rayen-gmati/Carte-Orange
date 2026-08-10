@@ -1,6 +1,6 @@
 # Supervision Réseau — Cartographie des Réclamations (Tunisie)
 
-Prototype Streamlit réalisé dans le cadre d'un stage PFE. Affiche une carte de
+Prototype d'une cartographie réalisé dans le cadre d'un stage 1ère année ingénieurie. Affiche une carte de
 la Tunisie (par gouvernorat ou par délégation) colorée selon l'état simulé du
 réseau :
 
