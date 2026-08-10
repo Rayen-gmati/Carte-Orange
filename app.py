@@ -29,36 +29,229 @@ STATUS_EMOJI = {"vert": "🟢", "orange": "🟠", "rouge": "🔴"}
 
 CUSTOM_CSS = """
 <style>
-    .main { background-color: #0A0D12; }
-    #MainMenu, footer, header { visibility: hidden; }
-    .block-container { padding-top: 1.4rem; padding-bottom: 2rem; }
+/* ==========================================================================
+   Supervision Réseau — thème « Orange Opérationnel Télécom »
+   Fond noir/anthracite · accent #FF7900 · glassmorphism léger
+   ========================================================================== */
 
-    .orange-badge {
-        background:#FF7900; color:#101317; font-weight:800; font-size:13px;
-        padding:5px 10px; border-radius:6px; display:inline-block;
-    }
-    .app-title { font-weight:700; font-size:20px; color:#E7EAEF; margin:0; }
-    .app-subtitle { font-size:12.5px; color:#8B93A3; margin:0; }
+:root {
+  --orange: #FF7900;
+  --orange-strong: #E86E00;
+  --orange-glow: rgba(255, 121, 0, 0.16);
+  --bg: #0A0C10;
+  --bg-2: #0F131B;
+  --card: rgba(19, 24, 32, 0.78);
+  --card-solid: #141A23;
+  --border: #242C3A;
+  --border-soft: #1B222E;
+  --text: #E9EDF3;
+  --muted: #8B93A3;
+  --green: #22C55E;
+  --red: #EF4444;
+  --radius: 14px;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
 
-    div[data-testid="stMetric"] {
-        background:#12161D; border:1px solid #232A36; border-radius:10px; padding:12px 14px;
-    }
-    div[data-testid="stMetricValue"] { font-family:'IBM Plex Mono', monospace; }
+html, body, [class*="css"] {
+  font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+}
 
-    .zone-card {
-        background:#12161D; border:1px solid #232A36; border-radius:12px; padding:16px 18px;
-    }
-    .status-pill {
-        display:inline-flex; align-items:center; gap:6px; font-weight:700; font-size:12px;
-        padding:4px 10px; border-radius:999px; border:1px solid currentColor;
-    }
-    .record-card {
-        background:#171C24; border:1px solid #232A36; border-radius:8px; padding:8px 10px; margin-bottom:6px;
-    }
-    .record-top { display:flex; justify-content:space-between; font-size:12.5px; font-weight:600; }
-    .record-meta { font-size:10.5px; color:#8B93A3; margin-top:2px; }
-    .tag-ok { color:#22C55E; font-size:10px; font-weight:700; }
-    .tag-open { color:#EF4444; font-size:10px; font-weight:700; }
+.stApp, .main { background: var(--bg); }
+#MainMenu, footer, header { visibility: hidden; }
+.block-container { padding-top: 1.2rem; padding-bottom: 2rem; max-width: 1500px; }
+
+/* --- Scrollbar -------------------------------------------------------- */
+::-webkit-scrollbar { width: 7px; height: 7px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #2A3342; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #3A4556; }
+
+/* ==========================================================================
+   En-tête
+   ========================================================================== */
+.orange-badge {
+  background: linear-gradient(135deg, var(--orange), var(--orange-strong));
+  color: #101317; font-weight: 800; font-size: 12px;
+  padding: 4px 11px; border-radius: 999px; display: inline-block;
+  letter-spacing: 0.4px; box-shadow: 0 0 18px var(--orange-glow);
+}
+.app-title { font-weight: 800; font-size: 21px; color: var(--text); margin: 0; letter-spacing: -0.2px; }
+.app-subtitle { font-size: 12.5px; color: var(--muted); margin: 0; }
+
+/* ==========================================================================
+   KPI / métriques (glassmorphism)
+   ========================================================================== */
+div[data-testid="stMetric"] {
+  background: var(--card);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+  transition: transform 220ms var(--ease), border-color 220ms ease, box-shadow 220ms ease;
+  animation: cardIn 500ms var(--ease) both;
+}
+div[data-testid="stMetric"]:hover {
+  transform: translateY(-3px);
+  border-color: var(--border);
+  box-shadow: 0 10px 26px rgba(0,0,0,0.35);
+}
+div[data-testid="stMetricLabel"] { color: var(--muted); font-size: 12px; font-weight: 600; }
+div[data-testid="stMetricValue"] {
+  font-weight: 800; font-size: 26px; color: var(--text); letter-spacing: -0.5px;
+}
+div[data-testid="stMetricDelta"] { color: var(--muted); font-weight: 600; }
+.kpi-row div[data-testid="stMetric"]:nth-child(2) { animation-delay: 60ms; }
+.kpi-row div[data-testid="stMetric"]:nth-child(3) { animation-delay: 120ms; }
+.kpi-row div[data-testid="stMetric"]:nth-child(4) { animation-delay: 180ms; }
+.kpi-row div[data-testid="stMetric"]:nth-child(5) { animation-delay: 240ms; }
+
+/* ==========================================================================
+   Onglets personnalisés (pills)
+   ========================================================================== */
+[data-testid="stBaseButton"] {
+  transition: transform 180ms var(--ease), box-shadow 180ms ease,
+              border-color 180ms ease, background 180ms ease, color 180ms ease;
+  border-radius: 999px !important;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+[data-testid="stBaseButton"]:hover { transform: translateY(-1px); }
+[data-testid="stBaseButton"]:active { transform: translateY(0) scale(0.98); }
+[data-testid="stBaseButton-primary"] {
+  background: linear-gradient(135deg, var(--orange), var(--orange-strong)) !important;
+  border: 1px solid var(--orange) !important;
+  color: #101317 !important;
+  box-shadow: 0 4px 16px var(--orange-glow);
+}
+[data-testid="stBaseButton-secondary"] {
+  background: transparent !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text) !important;
+}
+[data-testid="stBaseButton-secondary"]:hover {
+  border-color: var(--orange) !important;
+  color: #FFB066 !important;
+  box-shadow: 0 0 0 3px var(--orange-glow);
+}
+
+/* ==========================================================================
+   Cartes de détail & listes (glassmorphism)
+   ========================================================================== */
+.zone-card {
+  background: var(--card);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.30);
+  animation: cardIn 420ms var(--ease) both;
+}
+.zone-card .sk-line { animation: shimmer 1.4s ease infinite; }
+.status-pill {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-weight: 700; font-size: 12px;
+  padding: 6px 12px; border-radius: 999px;
+  border: 1px solid currentColor;
+  background: rgba(255,255,255,0.02);
+  white-space: nowrap;
+}
+.status-dot {
+  width: 9px; height: 9px; border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 8px currentColor;
+}
+.record-card {
+  background: var(--card-solid);
+  border: 1px solid var(--border-soft);
+  border-radius: 11px;
+  padding: 9px 12px; margin-bottom: 7px;
+  transition: transform 180ms var(--ease), border-color 180ms ease, background 180ms ease;
+  animation: cardIn 380ms var(--ease) both;
+}
+.record-card:hover { transform: translateX(4px); border-color: var(--border); }
+.record-top { display: flex; justify-content: space-between; font-size: 12.5px; font-weight: 600; }
+.record-meta { font-size: 10.5px; color: var(--muted); margin-top: 2px; }
+.tag-ok { color: var(--green); font-size: 10px; font-weight: 700; }
+.tag-open { color: var(--red); font-size: 10px; font-weight: 700; }
+
+/* --- Barre de progression (indice qualité) ------------------------------ */
+[data-testid="stProgress"] > div { background: var(--border-soft) !important; }
+[data-testid="stProgress"] [role="progressbar"] {
+  background: linear-gradient(90deg, var(--orange-strong), var(--orange)) !important;
+  box-shadow: 0 0 10px var(--orange-glow);
+}
+/* --- mini barre métier (indice) ---------------------------------------- */
+.quality-bar {
+  height: 8px; border-radius: 999px; background: var(--border-soft);
+  overflow: hidden; position: relative;
+}
+.quality-bar > span {
+  display: block; height: 100%; border-radius: 999px;
+  background: linear-gradient(90deg, var(--orange-strong), var(--orange));
+  box-shadow: 0 0 12px var(--orange-glow);
+  animation: growBar 800ms var(--ease) both;
+}
+
+/* ==========================================================================
+   Skeleton loader (shimmer)
+   ========================================================================== */
+.sk-line {
+  height: 12px; border-radius: 6px; margin-bottom: 12px;
+  background: linear-gradient(90deg, #1A212C 25%, #232C3A 37%, #1A212C 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+}
+.sk-circle {
+  width: 44px; height: 44px; border-radius: 50%; margin: 0 auto 14px;
+  background: linear-gradient(90deg, #1A212C 25%, #232C3A 37%, #1A212C 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+}
+@keyframes shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+/* ==========================================================================
+   Animations
+   ========================================================================== */
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(14px) scale(0.985); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes fadeSlide {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes growBar {
+  from { width: 0; }
+}
+
+/* Apparition douce de la carte (iframe Folium) après chargement */
+[data-testid="stElementContainer"] iframe {
+  animation: fadeIn 600ms ease both;
+}
+
+/* Graphiques Plotly — apparition en fondu + glissement à chaque chargement */
+[data-testid="stPlotlyChart"] {
+  animation: fadeSlide 550ms var(--ease) both;
+}
+
+/* Tableaux de données */
+.stDataFrame { border: 1px solid var(--border-soft); border-radius: 12px; overflow: hidden; }
+
+/* ==========================================================================
+   Responsive — pas de saut brutal de mise en page
+   ========================================================================== */
+@media (max-width: 900px) {
+  .block-container { padding: 1rem 0.6rem 2rem; }
+  div[data-testid="stMetricValue"] { font-size: 22px; }
+}
 </style>
 """
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
@@ -72,7 +265,7 @@ del_geo = load_geojson("delegations.geojson")
 # ---------------------------------------------------------------------------
 # État de session
 # ---------------------------------------------------------------------------
-defaults = {"seed": 0, "view": "Par gouvernorat", "focus_gov": None, "selected_id": None}
+defaults = {"seed": 0, "view": "Par gouvernorat", "focus_gov": None, "selected_id": None, "tab": "Carte"}
 for k, v in defaults.items():
     st.session_state.setdefault(k, v)
 
@@ -113,7 +306,7 @@ with st.sidebar:
     status_filter = status_map[status_filter]
 
     st.divider()
-    if st.button("🔄 Régénérer les données", use_container_width=True):
+    if st.button("🔄 Régénérer les données", use_container_width=True, type="primary"):
         st.session_state.seed += 1
         st.session_state.selected_id = None
         st.rerun()
@@ -134,6 +327,7 @@ st.markdown(
 )
 st.write("")
 
+st.markdown('<div class="kpi-row">', unsafe_allow_html=True)
 k1, k2, k3, k4, k5 = st.columns(5)
 counts = del_df["status"].value_counts()
 k1.metric("Zones vertes", int(counts.get("vert", 0)), f"{round(counts.get('vert', 0) / len(del_df) * 100)}%")
@@ -141,16 +335,32 @@ k2.metric("Zones orange", int(counts.get("orange", 0)), f"{round(counts.get('ora
 k3.metric("Zones rouges", int(counts.get("rouge", 0)), f"{round(counts.get('rouge', 0) / len(del_df) * 100)}%")
 k4.metric("Réclamations (30j)", int(del_df["complaint_count"].sum()))
 k5.metric("Indice qualité moyen", f"{round(del_df['score'].mean())}%")
+st.markdown('</div>', unsafe_allow_html=True)
 
 st.write("")
 
-tab_map, tab_stats = st.tabs(["🗺️ Carte interactive", "📊 Statistiques"])
+# ---------------------------------------------------------------------------
+# Onglets personnalisés — transition fluide via boutons pill
+# ---------------------------------------------------------------------------
+tab_bar_l, tab_bar_r = st.columns(2, gap="small")
+with tab_bar_l:
+    if st.button("🗺️ Carte interactive", type="primary" if st.session_state.tab == "Carte" else "secondary",
+                 use_container_width=True, key="tab_map"):
+        st.session_state.tab = "Carte"
+        st.rerun()
+with tab_bar_r:
+    if st.button("📊 Statistiques", type="primary" if st.session_state.tab == "Statistiques" else "secondary",
+                 use_container_width=True, key="tab_stats"):
+        st.session_state.tab = "Statistiques"
+        st.rerun()
+
+st.write("")
 
 # ---------------------------------------------------------------------------
-# Onglet Carte
+# Onglet Carte interactive
 # ---------------------------------------------------------------------------
-with tab_map:
-    col_map, col_detail = st.columns([1.5, 1])
+if st.session_state.tab == "Carte":
+    col_map, col_detail = st.columns([1.5, 1], gap="large")
     detail_slot = col_detail.empty()
 
     is_gov_view = st.session_state.view == "Par gouvernorat"
@@ -203,7 +413,8 @@ with tab_map:
         df_filtered = df_filtered[df_filtered["name"].str.lower().str.contains(search.strip().lower())]
     df_filtered = df_filtered.sort_values(by=["status", "complaint_count"], key=lambda s: s.map({"rouge": 0, "orange": 1, "vert": 2}) if s.name == "status" else s, ascending=[True, False])
 
-    st.subheader(f"Liste des zones ({len(df_filtered)})")
+    st.markdown('<p class="app-subtitle" style="font-size:14px; font-weight:700; color:#E9EDF3; margin-bottom:6px;">'
+                f'Liste des zones ({len(df_filtered)})</p>', unsafe_allow_html=True)
     left, right = st.columns([2, 1])
     with left:
         display_df = df_filtered[["name", "status", "score", "complaint_count"]].rename(
@@ -229,10 +440,15 @@ with tab_map:
         source_df = gov_df if is_gov_view else del_df
         row = source_df[source_df["id"] == sid]
         if row.empty:
+            # Skeleton loader — état « en attente de sélection »
             st.markdown(
-                '<div class="zone-card" style="text-align:center; color:#4B5568; padding:40px 16px;">'
+                '<div class="zone-card" style="text-align:center; padding:34px 18px;">'
+                '<div class="sk-circle"></div>'
+                '<div class="sk-line" style="width:70%; margin:0 auto 10px;"></div>'
+                '<div class="sk-line" style="width:45%; margin:0 auto;"></div>'
+                '<div style="color:#4B5568; font-size:12px; margin-top:16px;">'
                 "📍 Sélectionnez une zone sur la carte, dans la liste ou via le menu déroulant pour afficher le détail des réclamations."
-                "</div>",
+                "</div></div>",
                 unsafe_allow_html=True,
             )
         else:
@@ -241,14 +457,17 @@ with tab_map:
             st.markdown(
                 f"""
                 <div class="zone-card">
-                  <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                  <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
                     <div>
-                      <div style="font-size:10.5px; color:#8B93A3; text-transform:uppercase; letter-spacing:0.5px; font-weight:600;">
+                      <div style="font-size:10.5px; color:#8B93A3; text-transform:uppercase; letter-spacing:0.6px; font-weight:700;">
                         {"Gouvernorat" if is_gov_view else "Délégation · " + r["gouv_name"]}
                       </div>
-                      <div style="font-size:19px; font-weight:700; margin-top:2px;">{r['name']}</div>
+                      <div style="font-size:20px; font-weight:800; margin-top:3px; letter-spacing:-0.3px;">{r['name']}</div>
                     </div>
-                    <span class="status-pill" style="color:{color};">{STATUS_EMOJI[r['status']]} {STATUS_LABELS[r['status']]}</span>
+                    <span class="status-pill" style="color:{color};">
+                      <span class="status-dot" style="background:{color};"></span>
+                      {STATUS_LABELS[r['status']]}
+                    </span>
                   </div>
                 </div>
                 """,
@@ -264,14 +483,20 @@ with tab_map:
             open_count = int((zone_reclam["statut"] == "En cours").sum())
             m3.metric("Dossiers en cours", open_count)
 
-            st.progress(int(r["score"]))
+            # Barre d'indice qualité stylée (orange signature)
+            st.markdown(
+                f'<div style="margin:6px 0 2px;"><span style="font-size:11px; color:#8B93A3; font-weight:600;">'
+                f'Indice qualité — {r["score"]}%</span></div>'
+                f'<div class="quality-bar"><span style="width:{r["score"]}%"></span></div>',
+                unsafe_allow_html=True,
+            )
 
             trend = last_n_days_counts(zone_reclam, 7)
             st.caption("Réclamations · 7 derniers jours")
             st.bar_chart(trend, height=140, color="#FF7900")
 
             if is_gov_view and int(r["delegation_count"]) > 0:
-                if st.button(f"Voir les {int(r['delegation_count'])} délégations →", use_container_width=True):
+                if st.button(f"Voir les {int(r['delegation_count'])} délégations →", use_container_width=True, type="secondary"):
                     st.session_state.view = "Par délégation"
                     st.session_state.focus_gov = sid
                     st.session_state.selected_id = None
@@ -299,11 +524,12 @@ with tab_map:
 # ---------------------------------------------------------------------------
 # Onglet Statistiques
 # ---------------------------------------------------------------------------
-with tab_stats:
-    c1, c2 = st.columns(2)
+else:
+    c1, c2 = st.columns(2, gap="large")
 
     with c1:
-        st.subheader("Répartition des statuts (délégations)")
+        st.markdown('<p class="app-subtitle" style="font-size:14px; font-weight:700; color:#E9EDF3;">Répartition des statuts (délégations)</p>',
+                    unsafe_allow_html=True)
         pie_df = del_df["status"].value_counts().reset_index()
         pie_df.columns = ["status", "count"]
         pie_df["label"] = pie_df["status"].map(STATUS_LABELS)
@@ -312,25 +538,70 @@ with tab_stats:
             color="status", color_discrete_map={"vert": "#22C55E", "orange": "#FF7900", "rouge": "#EF4444"},
             hole=0.55,
         )
-        fig_pie.update_layout(paper_bgcolor="rgba(0,0,0,0)", font_color="#E7EAEF", legend_title="")
-        st.plotly_chart(fig_pie, use_container_width=True)
+        fig_pie.update_layout(paper_bgcolor="rgba(0,0,0,0)", font_color="#E9EDF3", legend_title="",
+                              margin=dict(l=8, r=8, t=8, b=8))
+        st.plotly_chart(fig_pie, use_container_width=True, config={"displayModeBar": False})
 
     with c2:
-        st.subheader("Top 10 gouvernorats les plus impactés")
+        st.markdown('<p class="app-subtitle" style="font-size:14px; font-weight:700; color:#E9EDF3;">Top 10 gouvernorats les plus impactés</p>',
+                    unsafe_allow_html=True)
         top10 = gov_df.sort_values("complaint_count", ascending=False).head(10)
         fig_bar = px.bar(
             top10, x="complaint_count", y="name", orientation="h",
             color="status", color_discrete_map={"vert": "#22C55E", "orange": "#FF7900", "rouge": "#EF4444"},
             labels={"complaint_count": "Réclamations", "name": ""},
         )
-        fig_bar.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="#E7EAEF", yaxis={"categoryorder": "total ascending"}, showlegend=False)
-        st.plotly_chart(fig_bar, use_container_width=True)
+        fig_bar.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="#E9EDF3",
+                              yaxis={"categoryorder": "total ascending"}, showlegend=False,
+                              margin=dict(l=8, r=8, t=8, b=8))
+        st.plotly_chart(fig_bar, use_container_width=True, config={"displayModeBar": False})
 
-    st.subheader("Évolution des réclamations — 30 derniers jours")
+    # -- mini-tendances (sparklines) par état réseau -------------------------
+    st.markdown('<p class="app-subtitle" style="font-size:14px; font-weight:700; color:#E9EDF3; margin-top:8px;">Tendance 14 jours par état réseau</p>',
+                unsafe_allow_html=True)
+    del_status_map = del_df.set_index("id")["status"].to_dict()
+    rec_status = reclamations_df.copy()
+    rec_status["status"] = rec_status["delegation_id"].map(del_status_map)
+
+    def _daily_series(subset: pd.DataFrame, n: int = 14) -> pd.DataFrame:
+        """Série quotidienne {jour, count} sur les n derniers jours."""
+        today = pd.Timestamp.now().normalize()
+        days = pd.date_range(today - pd.Timedelta(days=n - 1), today, freq="D")
+        if subset.empty:
+            vals = [0] * n
+        else:
+            g = subset.groupby(subset["date"].dt.normalize()).size()
+            vals = [int(g.get(d, 0)) for d in days]
+        return pd.DataFrame({"jour": days.strftime("%d/%m"), "count": vals})
+
+    FILL_RGBA = {"vert": "rgba(34,197,94,0.12)", "orange": "rgba(255,121,0,0.14)", "rouge": "rgba(239,68,68,0.12)"}
+    SPARK_TITLES = {"vert": "🟢 Opérationnel", "orange": "🟠 Dégradé", "rouge": "🔴 Coupé"}
+    spark_cols = st.columns(3, gap="medium")
+    for col, status in zip(spark_cols, ("vert", "orange", "rouge")):
+        with col:
+            st.markdown(f'<p style="font-size:11px; color:#8B93A3; font-weight:600; margin:0 0 4px;">{SPARK_TITLES[status]}</p>',
+                        unsafe_allow_html=True)
+            spark_df = _daily_series(rec_status[rec_status["status"] == status])
+            fig_spark = px.area(spark_df, x="jour", y="count", labels={"jour": "", "count": ""})
+            fig_spark.update_traces(
+                line_color=STATUS_COLORS[status], line_width=1.8,
+                fillcolor=FILL_RGBA[status],
+            )
+            fig_spark.update_layout(
+                paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                margin=dict(l=0, r=0, t=0, b=0), height=96,
+                xaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
+                yaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
+            )
+            st.plotly_chart(fig_spark, use_container_width=True, config={"displayModeBar": False})
+
+    st.markdown('<p class="app-subtitle" style="font-size:14px; font-weight:700; color:#E9EDF3; margin-top:10px;">Évolution des réclamations — 30 derniers jours</p>',
+                unsafe_allow_html=True)
     daily = reclamations_df.copy()
     daily["day"] = daily["date"].dt.date
     daily_counts = daily.groupby("day").size().reset_index(name="count")
     fig_line = px.area(daily_counts, x="day", y="count", labels={"day": "", "count": "Réclamations"})
     fig_line.update_traces(line_color="#FF7900", fillcolor="rgba(255,121,0,0.15)")
-    fig_line.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="#E7EAEF")
-    st.plotly_chart(fig_line, use_container_width=True)
+    fig_line.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="#E9EDF3",
+                           margin=dict(l=8, r=8, t=8, b=8))
+    st.plotly_chart(fig_line, use_container_width=True, config={"displayModeBar": False})
