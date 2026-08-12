@@ -434,13 +434,21 @@ if st.session_state.tab == "Carte":
             show_points=st.session_state.show_points,
             locate_point=locate_point,
         )
-        map_event = st_folium(fmap, height=620, use_container_width=True, returned_objects=["last_active_drawing"])
+        # Clé dynamique pour forcer le re-render de st_folium quand la localisation change
+        locate_key_suffix = ""
+        if st.session_state.locate_complaint:
+            lp = st.session_state.locate_complaint
+            locate_key_suffix = f"_loc_{lp['lat']}_{lp['lon']}"
+        map_key = f"map_{st.session_state.view}_{st.session_state.selected_id}{locate_key_suffix}"
+
+        map_event = st_folium(fmap, height=620, use_container_width=True, returned_objects=["last_active_drawing"], key=map_key)
 
     if map_event and map_event.get("last_active_drawing"):
         clicked_props = map_event["last_active_drawing"].get("properties", {})
         clicked_id = clicked_props.get(id_field)
         if clicked_id and clicked_id != st.session_state.selected_id:
             st.session_state.selected_id = clicked_id
+            st.session_state.locate_complaint = None  # Retour vue normale
             st.rerun()
 
     # -- filtre / recherche (dans la colonne gauche, sous la carte) ---------
@@ -470,6 +478,7 @@ if st.session_state.tab == "Carte":
                 picked = st.selectbox("Sélectionner une zone", options, index=default_index, format_func=lambda i: labels[i])
                 if picked != st.session_state.selected_id:
                     st.session_state.selected_id = picked
+                    st.session_state.locate_complaint = None
                     st.rerun()
             else:
                 st.info("Aucune zone ne correspond à la recherche.")

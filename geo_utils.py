@@ -150,14 +150,15 @@ def build_map(
         )
         gj.add_to(m)
 
-    tunisia_fit_bounds(m)
+    if not locate_point:
+        tunisia_fit_bounds(m)
 
     # -- Localisation d'une réclamation spécifique (marqueur pulsant) ------
     if locate_point:
         lat, lon = locate_point["Latitude"], locate_point["Longitude"]
         # Injecter le CSS de pulsation
         m.get_root().html.add_child(folium.Element(LOCATE_MARKER_CSS))
-        # Centrer et zoomer sur le point
+        # Centrer et zoomer sur le point (avant les GeoJSON pour éviter le conflit fit_bounds)
         m.location = [lat, lon]
         m.options["zoom"] = 14
         # Cercle extérieur pulsant (animation)
