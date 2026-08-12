@@ -362,7 +362,6 @@ st.write("")
 # ---------------------------------------------------------------------------
 if st.session_state.tab == "Carte":
     col_map, col_detail = st.columns([1.5, 1], gap="large")
-    detail_slot = col_detail.empty()
 
     is_gov_view = st.session_state.view == "Par gouvernorat"
 
@@ -428,8 +427,7 @@ if st.session_state.tab == "Carte":
             st.session_state.selected_id = clicked_id
             st.rerun()
 
-    # -- sélecteur de secours (recherche texte) -----------------------------
-    st.write("")
+    # -- filtre / recherche (dans la colonne gauche, sous la carte) ---------
     df_current = gov_df if is_gov_view else (del_df[del_df["gouv_id"] == st.session_state.focus_gov] if st.session_state.focus_gov else del_df)
     df_filtered = df_current.copy()
     if status_filter != "tous":
@@ -438,29 +436,30 @@ if st.session_state.tab == "Carte":
         df_filtered = df_filtered[df_filtered["name"].str.lower().str.contains(search.strip().lower())]
     df_filtered = df_filtered.sort_values(by=["status", "complaint_count"], key=lambda s: s.map({"rouge": 0, "orange": 1, "vert": 2}) if s.name == "status" else s, ascending=[True, False])
 
-    st.markdown('<p class="app-subtitle" style="font-size:14px; font-weight:700; color:#E9EDF3; margin-bottom:6px;">'
-                f'Liste des zones ({len(df_filtered)})</p>', unsafe_allow_html=True)
-    left, right = st.columns([2, 1])
-    with left:
-        display_df = df_filtered[["name", "status", "score", "complaint_count"]].rename(
-            columns={"name": "Zone", "status": "Statut", "score": "Indice", "complaint_count": "Réclamations"}
-        )
-        display_df["Statut"] = display_df["Statut"].map(STATUS_EMOJI) + " " + display_df["Statut"].map(STATUS_LABELS)
-        st.dataframe(display_df, hide_index=True, use_container_width=True, height=280)
-    with right:
-        if not df_filtered.empty:
-            options = df_filtered["id"].tolist()
-            labels = {row["id"]: f"{STATUS_EMOJI[row['status']]} {row['name']} ({row['complaint_count']})" for _, row in df_filtered.iterrows()}
-            default_index = options.index(st.session_state.selected_id) if st.session_state.selected_id in options else 0
-            picked = st.selectbox("Sélectionner une zone", options, index=default_index, format_func=lambda i: labels[i])
-            if picked != st.session_state.selected_id:
-                st.session_state.selected_id = picked
-                st.rerun()
-        else:
-            st.info("Aucune zone ne correspond à la recherche.")
+    with col_map:
+        st.markdown('<p class="app-subtitle" style="font-size:14px; font-weight:700; color:#E9EDF3; margin-bottom:6px;">'
+                    f'Liste des zones ({len(df_filtered)})</p>', unsafe_allow_html=True)
+        zl_left, zl_right = st.columns([2, 1])
+        with zl_left:
+            display_df = df_filtered[["name", "status", "score", "complaint_count"]].rename(
+                columns={"name": "Zone", "status": "Statut", "score": "Indice", "complaint_count": "Réclamations"}
+            )
+            display_df["Statut"] = display_df["Statut"].map(STATUS_EMOJI) + " " + display_df["Statut"].map(STATUS_LABELS)
+            st.dataframe(display_df, hide_index=True, use_container_width=True, height=280)
+        with zl_right:
+            if not df_filtered.empty:
+                options = df_filtered["id"].tolist()
+                labels = {row["id"]: f"{STATUS_EMOJI[row['status']]} {row['name']} ({row['complaint_count']})" for _, row in df_filtered.iterrows()}
+                default_index = options.index(st.session_state.selected_id) if st.session_state.selected_id in options else 0
+                picked = st.selectbox("Sélectionner une zone", options, index=default_index, format_func=lambda i: labels[i])
+                if picked != st.session_state.selected_id:
+                    st.session_state.selected_id = picked
+                    st.rerun()
+            else:
+                st.info("Aucune zone ne correspond à la recherche.")
 
-    # -- panneau de détail (rempli après coup, dans le slot réservé) --------
-    with detail_slot.container():
+    # -- panneau de détail (colonne droite) ---------------------------------
+    with col_detail:
         sid = st.session_state.selected_id
         source_df = gov_df if is_gov_view else del_df
         row = source_df[source_df["id"] == sid]
