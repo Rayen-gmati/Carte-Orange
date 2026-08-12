@@ -50,6 +50,22 @@ MAP_BG_CSS = """
 """
 
 
+# CSS pour le marqueur pulsant (localisation d'une réclamation)
+LOCATE_MARKER_CSS = """
+<style>
+    .locate-pulse {
+        border-radius: 50%;
+        animation: locatePulse 1.5s ease-out infinite;
+    }
+    @keyframes locatePulse {
+        0%   { box-shadow: 0 0 0 0 rgba(255,121,0,0.7); }
+        70%  { box-shadow: 0 0 0 20px rgba(255,121,0,0); }
+        100% { box-shadow: 0 0 0 0 rgba(255,121,0,0); }
+    }
+</style>
+"""
+
+
 def tunisia_fit_bounds(m: folium.Map) -> None:
     """Cadre la vue sur la Tunisie avec une marge, et verrouille le déplacement.
 
@@ -73,12 +89,15 @@ def build_map(
     center: tuple[float, float] = (34.2, 9.4),
     complaint_points: list[dict] | None = None,
     show_points: bool = False,
+    locate_point: dict | None = None,
 ) -> folium.Map:
     """Construit une carte Folium colorée par statut réseau.
 
     status_by_id: dict {id: {"status": "vert"|"orange"|"rouge", "count": int, "score": int}}
     complaint_points: liste de dicts {"Latitude", "Longitude", "statut", "type", ...}
     show_points: si True, superpose les points GPS des réclamations sur la carte
+    locate_point: dict {"Latitude", "Longitude", "type", "statut", ...} pour centrer
+                  et zoomer sur une réclamation précise avec un marqueur pulsant
 
     Fond de carte épuré (aucune tuile cartographique) : l'attention se porte
     à 100 % sur les gouvernorats tunisiens. Le survol éclaire légèrement la
@@ -132,6 +151,39 @@ def build_map(
         gj.add_to(m)
 
     tunisia_fit_bounds(m)
+
+    # -- Localisation d'une réclamation spécifique (marqueur pulsant) ------
+    if locate_point:
+        lat, lon = locate_point["Latitude"], locate_point["Longitude"]
+        # Injecter le CSS de pulsation
+        m.get_root().html.add_child(folium.Element(LOCATE_MARKER_CSS))
+        # Centrer et zoomer sur le point
+        m.location = [lat, lon]
+        m.options["zoom"] = 14
+        # Cercle extérieur pulsant (animation)
+        folium.CircleMarker(
+            location=[lat, lon],
+            radius=18,
+            color="#FF7900",
+            fillColor="#FF7900",
+            fillOpacity=0.18,
+            weight=2,
+            className="locate-pulse",
+        ).add_to(m)
+        # Marqueur central
+        folium.CircleMarker(
+            location=[lat, lon],
+            radius=7,
+            color="#FFFFFF",
+            fillColor="#FF7900",
+            fillOpacity=1.0,
+            weight=2.5,
+            tooltip=folium.Tooltip(
+                f"<b>📍 {locate_point.get('type', 'Réclamation')}</b><br>"
+                f"Statut : {locate_point.get('statut', '?')}<br>"
+                f"GPS : {lat:.5f}, {lon:.5f}"
+            ),
+        ).add_to(m)
 
     # -- Superposition des points GPS de réclamations (optionnel) ----------
     if show_points and complaint_points:

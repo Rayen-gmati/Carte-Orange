@@ -172,6 +172,15 @@ div[data-testid="stMetricDelta"] { color: var(--muted); font-weight: 600; }
 .record-card:hover { transform: translateX(4px); border-color: var(--border); }
 .record-top { display: flex; justify-content: space-between; font-size: 12.5px; font-weight: 600; }
 .record-meta { font-size: 10.5px; color: var(--muted); margin-top: 2px; }
+.locate-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 10px; font-weight: 700; color: #FF7900;
+  background: rgba(255,121,0,0.10); border: 1px solid rgba(255,121,0,0.25);
+  border-radius: 999px; padding: 2px 9px; margin-top: 5px;
+  cursor: pointer; transition: background 180ms ease, border-color 180ms ease;
+  text-decoration: none;
+}
+.locate-btn:hover { background: rgba(255,121,0,0.22); border-color: #FF7900; }
 .tag-ok { color: var(--green); font-size: 10px; font-weight: 700; }
 .tag-open { color: var(--red); font-size: 10px; font-weight: 700; }
 
@@ -265,7 +274,7 @@ del_geo = load_geojson("delegations.geojson")
 # ---------------------------------------------------------------------------
 # État de session
 # ---------------------------------------------------------------------------
-defaults = {"seed": 0, "view": "Par gouvernorat", "focus_gov": None, "selected_id": None, "tab": "Carte", "show_points": False}
+defaults = {"seed": 0, "view": "Par gouvernorat", "focus_gov": None, "selected_id": None, "tab": "Carte", "show_points": False, "locate_complaint": None}
 for k, v in defaults.items():
     st.session_state.setdefault(k, v)
 
@@ -406,6 +415,12 @@ if st.session_state.tab == "Carte":
                 ["Latitude", "Longitude", "statut", "type", "delegation_name", "gouv_name"]
             ].to_dict("records")
 
+        # Préparer le point de localisation (si l'utilisateur a cliqué sur une réclamation)
+        locate_point = None
+        if st.session_state.locate_complaint:
+            lp = st.session_state.locate_complaint
+            locate_point = {"Latitude": lp["lat"], "Longitude": lp["lon"], "type": lp.get("type", ""), "statut": lp.get("statut", "")}
+
         fmap = build_map(
             features,
             id_field,
@@ -417,6 +432,7 @@ if st.session_state.tab == "Carte":
             center=center,
             complaint_points=complaint_points,
             show_points=st.session_state.show_points,
+            locate_point=locate_point,
         )
         map_event = st_folium(fmap, height=620, use_container_width=True, returned_objects=["last_active_drawing"])
 
@@ -530,7 +546,7 @@ if st.session_state.tab == "Carte":
             if zone_reclam.empty:
                 st.caption("Aucune réclamation enregistrée.")
             else:
-                for _, rec in zone_reclam.sort_values("date", ascending=False).head(12).iterrows():
+                for idx_rec, rec in zone_reclam.sort_values("date", ascending=False).head(12).iterrows():
                     tag_class = "tag-ok" if rec["statut"] == "Résolue" else "tag-open"
                     gps_txt = ""
                     if pd.notna(rec.get("Latitude")) and pd.notna(rec.get("Longitude")):
@@ -547,6 +563,16 @@ if st.session_state.tab == "Carte":
                         """,
                         unsafe_allow_html=True,
                     )
+                    # Bouton "Localiser" — zoome la carte sur ce point GPS
+                    if pd.notna(rec.get("Latitude")) and pd.notna(rec.get("Longitude")):
+                        if st.button("📍 Localiser sur la carte", key=f"loc_{rec['id']}"):
+                            st.session_state.locate_complaint = {
+                                "lat": float(rec["Latitude"]),
+                                "lon": float(rec["Longitude"]),
+                                "type": rec["type"],
+                                "statut": rec["statut"],
+                            }
+                            st.rerun()
 
 # ---------------------------------------------------------------------------
 # Onglet Statistiques
