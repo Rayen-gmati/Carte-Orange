@@ -265,7 +265,7 @@ del_geo = load_geojson("delegations.geojson")
 # ---------------------------------------------------------------------------
 # État de session
 # ---------------------------------------------------------------------------
-defaults = {"seed": 0, "view": "Par gouvernorat", "focus_gov": None, "selected_id": None, "tab": "Carte"}
+defaults = {"seed": 0, "view": "Par gouvernorat", "focus_gov": None, "selected_id": None, "tab": "Carte", "show_points": False}
 for k, v in defaults.items():
     st.session_state.setdefault(k, v)
 
@@ -304,6 +304,7 @@ with st.sidebar:
     status_filter = st.radio("Statut", ["Tous", "🟢 Opérationnel", "🟠 Dégradé", "🔴 Coupé"], horizontal=False)
     status_map = {"Tous": "tous", "🟢 Opérationnel": "vert", "🟠 Dégradé": "orange", "🔴 Coupé": "rouge"}
     status_filter = status_map[status_filter]
+    st.session_state.show_points = st.checkbox("Afficher les points de réclamation", value=st.session_state.show_points)
 
     st.divider()
     if st.button("🔄 Régénérer les données", use_container_width=True, type="primary"):
@@ -384,6 +385,28 @@ if st.session_state.tab == "Carte":
         status_by_id = {r["id"]: {"status": r["status"], "count": r["complaint_count"], "score": r["score"]} for _, r in del_df.iterrows()}
 
     with col_map:
+        # Préparer les points GPS des réclamations pour la superposition sur la carte
+        complaint_points = None
+        if st.session_state.show_points and {"Latitude", "Longitude"}.issubset(reclamations_df.columns):
+            points_df = reclamations_df.dropna(subset=["Latitude", "Longitude"]).copy()
+            if is_gov_view:
+                if st.session_state.selected_id:
+                    points_df = points_df[points_df["gouv_id"] == st.session_state.selected_id]
+            else:
+                if st.session_state.focus_gov:
+                    points_df = points_df[points_df["gouv_id"] == st.session_state.focus_gov]
+                if st.session_state.selected_id:
+                    points_df = points_df[points_df["delegation_id"] == st.session_state.selected_id]
+
+            # Ajouter les noms lisibles pour les tooltips
+            for col in ("delegation_name", "gouv_name", "type", "statut"):
+                if col not in points_df.columns:
+                    points_df[col] = ""
+
+            complaint_points = points_df[
+                ["Latitude", "Longitude", "statut", "type", "delegation_name", "gouv_name"]
+            ].to_dict("records")
+
         fmap = build_map(
             features,
             id_field,
@@ -393,6 +416,8 @@ if st.session_state.tab == "Carte":
             outline_features=outline_features,
             zoom_start=zoom_start,
             center=center,
+            complaint_points=complaint_points,
+            show_points=st.session_state.show_points,
         )
         map_event = st_folium(fmap, height=620, use_container_width=True, returned_objects=["last_active_drawing"])
 
@@ -508,6 +533,9 @@ if st.session_state.tab == "Carte":
             else:
                 for _, rec in zone_reclam.sort_values("date", ascending=False).head(12).iterrows():
                     tag_class = "tag-ok" if rec["statut"] == "Résolue" else "tag-open"
+                    gps_txt = ""
+                    if pd.notna(rec.get("Latitude")) and pd.notna(rec.get("Longitude")):
+                        gps_txt = f" · GPS {float(rec['Latitude']):.5f}, {float(rec['Longitude']):.5f}"
                     st.markdown(
                         f"""
                         <div class="record-card">
@@ -515,7 +543,7 @@ if st.session_state.tab == "Carte":
                             <span>{rec['type']}</span>
                             <span class="{tag_class}">{rec['statut']}</span>
                           </div>
-                          <div class="record-meta">{rec['date'].strftime('%d %b · %H:%M')} · {rec['secteur']} · {rec['canal']}</div>
+                          <div class="record-meta">{rec['date'].strftime('%d %b · %H:%M')} · {rec['secteur']} · {rec['canal']}{gps_txt}</div>
                         </div>
                         """,
                         unsafe_allow_html=True,

@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 import folium
+import folium.plugins
 
 from simulate import STATUS_COLORS, STATUS_LABELS
 
@@ -70,10 +71,14 @@ def build_map(
     outline_features: list[dict] | None = None,
     zoom_start: int = 6,
     center: tuple[float, float] = (34.2, 9.4),
+    complaint_points: list[dict] | None = None,
+    show_points: bool = False,
 ) -> folium.Map:
     """Construit une carte Folium colorée par statut réseau.
 
     status_by_id: dict {id: {"status": "vert"|"orange"|"rouge", "count": int, "score": int}}
+    complaint_points: liste de dicts {"Latitude", "Longitude", "statut", "type", ...}
+    show_points: si True, superpose les points GPS des réclamations sur la carte
 
     Fond de carte épuré (aucune tuile cartographique) : l'attention se porte
     à 100 % sur les gouvernorats tunisiens. Le survol éclaire légèrement la
@@ -127,4 +132,29 @@ def build_map(
         gj.add_to(m)
 
     tunisia_fit_bounds(m)
+
+    # -- Superposition des points GPS de réclamations (optionnel) ----------
+    if show_points and complaint_points:
+        # Couleurs selon le statut du ticket
+        POINT_COLORS = {"En cours": "#EF4444", "Résolu": "#22C55E"}
+
+        cluster = folium.plugins.MarkerCluster(name="Réclamations").add_to(m)
+        for pt in complaint_points:
+            color = POINT_COLORS.get(pt.get("statut", ""), "#8B93A3")
+            tooltip = (
+                f"<b>{pt.get('type', 'Réclamation')}</b><br>"
+                f"Statut : {pt.get('statut', '?')}<br>"
+                f"Délégation : {pt.get('delegation_name', '?')}<br>"
+                f"GPS : {pt['Latitude']:.5f}, {pt['Longitude']:.5f}"
+            )
+            folium.CircleMarker(
+                location=[pt["Latitude"], pt["Longitude"]],
+                radius=4,
+                color=color,
+                fillColor=color,
+                fillOpacity=0.85,
+                weight=1.2,
+                tooltip=folium.Tooltip(tooltip),
+            ).add_to(cluster)
+
     return m

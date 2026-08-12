@@ -18,6 +18,9 @@ from datetime import datetime, timedelta
 
 import numpy as np
 import pandas as pd
+from shapely.geometry import shape
+
+from client_data import random_point_in_polygon
 
 # ---------------------------------------------------------------------------
 # Constantes du domaine
@@ -129,6 +132,9 @@ def generate_network_data(delegation_features: list[dict], governorate_features:
             }
         )
 
+        # Préparer la géométrie Shapely pour générer des points GPS
+        del_geom = shape(feat["geometry"])
+
         pool = PANNE_TYPES if status == "vert" else [p for p in PANNE_TYPES if p[1] > 0]
         n_records = min(int(count), 22)
         for i in range(n_records):
@@ -139,6 +145,10 @@ def generate_network_data(delegation_features: list[dict], governorate_features:
             secteur = f"Secteur {rng.integers(1, 6)}"
             resolve_chance = {"vert": 0.95, "orange": 0.6, "rouge": 0.28}[status]
             statut = "Résolue" if rng.random() < resolve_chance else "En cours"
+
+            # Générer un point GPS aléatoire DANS le polygone de la délégation
+            lat, lon = random_point_in_polygon(del_geom, rng=rng)
+
             reclamation_rows.append(
                 {
                     "id": f"{del_id}-{i}",
@@ -150,6 +160,8 @@ def generate_network_data(delegation_features: list[dict], governorate_features:
                     "canal": canal,
                     "secteur": secteur,
                     "statut": statut,
+                    "Latitude": round(lat, 6),
+                    "Longitude": round(lon, 6),
                 }
             )
 
